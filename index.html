@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFA Simulator</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- JavaScript files created by team members -->
+    <script src="script.js" defer></script>
+    <script src="visualization.js" defer></script>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>DFA Simulator</h1>
+        <p>Deterministic Finite Automata Simulator</p>
+    </header>
+
+    <main class="container">
+
+        <!-- DFA Configuration -->
+        <section class="card">
+            <h2>1. DFA Configuration</h2>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="statesInput">States</label>
+                    <input
+                        type="text"
+                        id="statesInput"
+                        value="q0, q1"
+                        placeholder="Example: q0, q1, q2"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="alphabetInput">Input Alphabet</label>
+                    <input
+                        type="text"
+                        id="alphabetInput"
+                        value="0, 1"
+                        placeholder="Example: 0, 1"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="initialStateInput">Initial State</label>
+                    <input
+                        type="text"
+                        id="initialStateInput"
+                        value="q0"
+                        placeholder="Example: q0"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="finalStatesInput">Final States</label>
+                    <input
+                        type="text"
+                        id="finalStatesInput"
+                        value="q1"
+                        placeholder="Example: q1"
+                    >
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Transition Table -->
+        <section class="card">
+            <h2>2. Transition Table</h2>
+
+            <p class="description">
+                Define the next state for each current state and input symbol.
+            </p>
+
+            <div class="table-container">
+                <table id="transitionTable">
+                    <thead>
+                        <tr>
+                            <th>Current State</th>
+                            <th>Input Symbol</th>
+                            <th>Next State</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="transitionTableBody">
+
+                        <tr>
+                            <td>
+                                <input class="transition-from" value="q0">
+                            </td>
+                            <td>
+                                <input class="transition-symbol" value="0">
+                            </td>
+                            <td>
+                                <input class="transition-to" value="q0">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input class="transition-from" value="q0">
+                            </td>
+                            <td>
+                                <input class="transition-symbol" value="1">
+                            </td>
+                            <td>
+                                <input class="transition-to" value="q1">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input class="transition-from" value="q1">
+                            </td>
+                            <td>
+                                <input class="transition-symbol" value="0">
+                            </td>
+                            <td>
+                                <input class="transition-to" value="q0">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input class="transition-from" value="q1">
+                            </td>
+                            <td>
+                                <input class="transition-symbol" value="1">
+                            </td>
+                            <td>
+                                <input class="transition-to" value="q1">
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Input String -->
+        <section class="card">
+            <h2>3. Test Input String</h2>
+
+            <div class="form-group">
+                <label for="inputString">Enter a string</label>
+                <input
+                    type="text"
+                    id="inputString"
+                    placeholder="Example: 101"
+                    autocomplete="off"
+                >
+            </div>
+
+            <button type="button" id="simulateBtn" class="simulate-btn">
+                Simulate DFA
+            </button>
+
+            <p id="errorMessage" class="error-message" aria-live="polite"></p>
+        </section>
+
+        <!-- Result -->
+        <section class="card">
+            <h2>4. Simulation Result</h2>
+
+            <div class="result-box">
+                <h3>Result</h3>
+                <p id="resultStatus" class="result-status">
+                    Waiting for simulation...
+                </p>
+
+                <h3>Execution Path</h3>
+                <p id="executionPath" class="execution-path">
+                    The state transitions will appear here.
+                </p>
+            </div>
+        </section>
+
+        <!-- DFA Visualization -->
+        <section class="card">
+            <h2>5. DFA State Diagram</h2>
+
+            <p class="description">
+                Visual representation of the DFA and its transitions.
+            </p>
+
+            <div id="dfaDiagram" class="diagram-container">
+                <svg
+                    id="dfaSvg"
+                    viewBox="0 0 700 300"
+                    role="img"
+                    aria-label="DFA state diagram"
+                >
+                    <text x="350" y="150" text-anchor="middle">
+                        DFA diagram will appear here.
+                    </text>
+                </svg>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>DFA Simulator | Theory of Computation Project</p>
+    </footer>
+
+</body>
+</html>
