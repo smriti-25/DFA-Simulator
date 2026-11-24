@@ -310,4 +310,16 @@ testInvalidDFA("Duplicate Alphabet Symbols", duplicateAlphabetDFA);
 
 
 
+// PART 4: BROWSER INTEGRATION
+
+
+// Make DFA functions accessible to other JavaScript files
+if (typeof window !== "undefined") {
+    window.DFAEngine = {
+        validateDFA,
+        simulateDFA
+    };
+}
+
+
 
