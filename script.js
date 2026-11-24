@@ -205,17 +205,34 @@ try {
 
 // TEST DFA SIMULATION
 
+
+// ==========================================
+// TEST DFA SIMULATION
+// ==========================================
+
 const testInputs = ["101", "111", "100", "000", ""];
 
 for (const input of testInputs) {
 
+    // Run DFA simulation
     const result = simulateDFA(dfa, input);
 
     console.log("\nInput:", input === "" ? "Empty String" : input);
     console.log("Result:", result.result);
     console.log("Final State:", result.finalState);
     console.log("State Path:", result.statePath.join(" -> "));
+
+    // Display step-by-step execution
+    console.log("Execution Steps:");
+
+    result.steps.forEach((step, index) => {
+        console.log(
+            `Step ${index + 1}: ${step.from} --${step.input}--> ${step.to}`
+        );
+    });
 }
+
+
 
 
 
