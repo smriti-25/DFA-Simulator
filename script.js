@@ -233,6 +233,81 @@ for (const input of testInputs) {
 }
 
 
+// ==========================================
+// PART 3: TEST INVALID DFA CONFIGURATIONS
+// ==========================================
+
+function testInvalidDFA(name, testDFA) {
+
+    console.log("\nTesting:", name);
+
+    try {
+        validateDFA(testDFA);
+        console.log("Unexpected: DFA was accepted.");
+    } catch (error) {
+        console.log("Correctly rejected:", error.message);
+    }
+}
+
+// Test 1: Missing transition
+const missingTransitionDFA = {
+    ...dfa,
+    transitions: {
+        q0: { "0": "q0" },
+        q1: { "0": "q0", "1": "q1" }
+    }
+};
+
+testInvalidDFA("Missing Transition", missingTransitionDFA);
+
+
+// Test 2: Invalid destination state
+const invalidDestinationDFA = {
+    ...dfa,
+    transitions: {
+        q0: { "0": "q0", "1": "q5" },
+        q1: { "0": "q0", "1": "q1" }
+    }
+};
+
+testInvalidDFA("Invalid Destination", invalidDestinationDFA);
+
+
+// Test 3: Invalid initial state
+const invalidInitialDFA = {
+    ...dfa,
+    initialState: "q5"
+};
+
+testInvalidDFA("Invalid Initial State", invalidInitialDFA);
+
+
+// Test 4: Invalid final state
+const invalidFinalDFA = {
+    ...dfa,
+    finalStates: ["q5"]
+};
+
+testInvalidDFA("Invalid Final State", invalidFinalDFA);
+
+
+// Test 5: Duplicate states
+const duplicateStatesDFA = {
+    ...dfa,
+    states: ["q0", "q1", "q1"]
+};
+
+testInvalidDFA("Duplicate States", duplicateStatesDFA);
+
+
+// Test 6: Duplicate alphabet symbols
+const duplicateAlphabetDFA = {
+    ...dfa,
+    alphabet: ["0", "1", "1"]
+};
+
+testInvalidDFA("Duplicate Alphabet Symbols", duplicateAlphabetDFA);
+
 
 
 
