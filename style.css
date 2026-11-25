@@ -223,3 +223,65 @@ td input {
         padding: 18px;
     }
 }
+
+/* DFA Visualization Styling */
+
+#dfa-visualization svg {
+    width: 100%;
+    min-height: 450px;
+    display: block;
+}
+
+.dfa-state-circle {
+    fill: #ffffff !important;
+    stroke: #2563eb !important;
+    stroke-width: 3px;
+}
+
+.dfa-final-ring {
+    fill: none !important;
+    stroke: #16a34a !important;
+    stroke-width: 3px;
+}
+
+.dfa-state-label {
+    fill: #1e293b !important;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.dfa-transition {
+    stroke: #64748b;
+    stroke-width: 2.5px;
+    fill: none;
+}
+
+.dfa-transition-label {
+    fill: #1e293b;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.dfa-state.visited .dfa-state-circle {
+    fill: #bfdbfe !important;
+}
+
+.dfa-state.current .dfa-state-circle {
+    fill: #facc15 !important;
+    stroke: #ca8a04 !important;
+}
+
+.dfa-state.accepted .dfa-state-circle {
+    fill: #bbf7d0 !important;
+    stroke: #16a34a !important;
+}
+
+.dfa-state.rejected .dfa-state-circle {
+    fill: #fecaca !important;
+    stroke: #dc2626 !important;
+}
+
+.dfa-transition.path-active {
+    stroke: #16a34a;
+    stroke-width: 4px;
+}

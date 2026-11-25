@@ -337,7 +337,12 @@ if (typeof document !== "undefined") {
             window.currentDFA = dfa;
 
             window.lastDFAResult = result;
+            // Clear previous DFA visualization
+            DFAVisualizer.clear();
 
+            // Render DFA diagram and highlight simulation
+            DFAVisualizer.render(dfa);
+            DFAVisualizer.update(result);
             // Notify visualization.js that simulation is complete
             document.dispatchEvent(
                 new CustomEvent("dfa:simulated", {
