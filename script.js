@@ -1,31 +1,5 @@
-// Example DFA: Binary strings ending in 1
+//DFA Validation and Simulation
 
-const dfa = {
-    // Set of all states
-    states: ["q0", "q1"],
-
-    // Input alphabet
-    alphabet: ["0", "1"],
-
-    // Transition function
-    transitions: {
-        q0: {
-            "0": "q0",
-            "1": "q1"
-        },
-
-        q1: {
-            "0": "q0",
-            "1": "q1"
-        }
-    },
-
-    // Initial state
-    initialState: "q0",
-
-    // Set of final states
-    finalStates: ["q1"]
-};
 
 
 
@@ -54,6 +28,20 @@ function validateDFA(dfa) {
         throw new Error("Duplicate alphabet symbols are not allowed.");
     }
 
+    // Check that state names are valid strings
+    for (const state of dfa.states) {
+        if (typeof state !== "string" || state.trim() === "") {
+            throw new Error("State names cannot be empty.");
+        }
+    }
+
+    // Check that alphabet symbols are valid strings
+    for (const symbol of dfa.alphabet) {
+        if (typeof symbol !== "string" || symbol.trim() === "") {
+            throw new Error("Alphabet symbols cannot be empty.");
+        }
+    }
+
     // Check initial state
     if (!dfa.states.includes(dfa.initialState)) {
         throw new Error("Initial state is invalid.");
@@ -75,12 +63,17 @@ function validateDFA(dfa) {
         throw new Error("Transition function is missing.");
     }
 
+    // Check transitions for every state
     for (const state of dfa.states) {
 
-        // Every state must have transitions
         const stateTransitions = dfa.transitions[state];
 
-        if (!stateTransitions || typeof stateTransitions !== "object") {
+        // Every state must have transitions
+        if (
+            !stateTransitions ||
+            typeof stateTransitions !== "object" ||
+            Array.isArray(stateTransitions)
+        ) {
             throw new Error(`Transitions missing for state ${state}.`);
         }
 
@@ -105,6 +98,7 @@ function validateDFA(dfa) {
 
         // No extra transition symbols are allowed
         for (const symbol of Object.keys(stateTransitions)) {
+
             if (!dfa.alphabet.includes(symbol)) {
                 throw new Error(
                     `Invalid alphabet symbol in transition: ${symbol}`
@@ -115,18 +109,15 @@ function validateDFA(dfa) {
 
     // No transitions for undefined states
     for (const state of Object.keys(dfa.transitions)) {
+
         if (!dfa.states.includes(state)) {
-            throw new Error(`Transition defined for unknown state: ${state}`);
+            throw new Error(
+                `Transition defined for unknown state: ${state}`
+            );
         }
     }
 
     return true;
-}
-try {
-    validateDFA(dfa);
-    console.log("DFA configuration is valid!");
-} catch (error) {
-    console.log("DFA Error:", error.message);
 }
 
 
@@ -146,6 +137,7 @@ function simulateDFA(dfa, inputString) {
 
     // Check whether every input symbol belongs to the alphabet
     for (const symbol of inputString) {
+
         if (!dfa.alphabet.includes(symbol)) {
             throw new Error(`Invalid input symbol: ${symbol}`);
         }
@@ -194,132 +186,381 @@ function simulateDFA(dfa, inputString) {
     };
 }
 
-// Test invalid input
-try {
-    console.log(simulateDFA(dfa, "102"));
-} catch (error) {
-    console.log("Input Error:", error.message);
+
+
+// PART 3: READ DFA CONFIGURATION FROM HTML
+
+
+// Get comma-separated values from an HTML input
+function getCommaSeparatedValues(inputId) {
+
+    const inputElement = document.getElementById(inputId);
+    const value = inputElement.value;
+
+    return value
+        .split(",")
+        .map(item => item.trim())
+        .filter(item => item !== "");
 }
 
 
+// Read DFA configuration entered by the user
+function getDFAFromHTML() {
 
-// TEST DFA SIMULATION
+    // Read states, alphabet, initial state and final states
+    const states = getCommaSeparatedValues("statesInput");
 
+    const alphabet = getCommaSeparatedValues("alphabetInput");
 
-// ==========================================
-// TEST DFA SIMULATION
-// ==========================================
+    const initialState = document
+        .getElementById("initialStateInput")
+        .value.trim();
 
-const testInputs = ["101", "111", "100", "000", ""];
+    const finalStates = getCommaSeparatedValues("finalStatesInput");
 
-for (const input of testInputs) {
+    // Store all transitions
+    const transitions = {};
 
-    // Run DFA simulation
-    const result = simulateDFA(dfa, input);
+    // Read every row from the transition table
+    const rows = document.querySelectorAll(
+        "#transitionTableBody tr"
+    );
 
-    console.log("\nInput:", input === "" ? "Empty String" : input);
-    console.log("Result:", result.result);
-    console.log("Final State:", result.finalState);
-    console.log("State Path:", result.statePath.join(" -> "));
+    rows.forEach(row => {
 
-    // Display step-by-step execution
-    console.log("Execution Steps:");
+        const from = row
+            .querySelector(".transition-from")
+            .value.trim();
 
-    result.steps.forEach((step, index) => {
-        console.log(
-            `Step ${index + 1}: ${step.from} --${step.input}--> ${step.to}`
-        );
+        const symbol = row
+            .querySelector(".transition-symbol")
+            .value.trim();
+
+        const to = row
+            .querySelector(".transition-to")
+            .value.trim();
+
+        // Do not allow incomplete transition rows
+        if (from === "" || symbol === "" || to === "") {
+            throw new Error(
+                "Please complete every transition table row."
+            );
+        }
+
+        // Create an object for the current state if needed
+        if (!transitions[from]) {
+            transitions[from] = {};
+        }
+
+        // Do not allow duplicate transitions
+        if (Object.hasOwn(transitions[from], symbol)) {
+            throw new Error(
+                `Duplicate transition for state ${from} and symbol ${symbol}.`
+            );
+        }
+
+        // Store the transition
+        transitions[from][symbol] = to;
     });
+
+    // Create the DFA object
+    const dfa = {
+        states: states,
+        alphabet: alphabet,
+        transitions: transitions,
+        initialState: initialState,
+        finalStates: finalStates
+    };
+
+    return dfa;
 }
 
 
-// ==========================================
-// PART 3: TEST INVALID DFA CONFIGURATIONS
-// ==========================================
+// ============================================================
+// PART 4: HTML SIMULATION AND RESULT DISPLAY
+// ============================================================
 
-function testInvalidDFA(name, testDFA) {
+if (typeof document !== "undefined") {
 
-    console.log("\nTesting:", name);
+    // Get the Simulate button
+    const simulateButton = document.getElementById("simulateBtn");
 
-    try {
-        validateDFA(testDFA);
-        console.log("Unexpected: DFA was accepted.");
-    } catch (error) {
-        console.log("Correctly rejected:", error.message);
-    }
-}
+    // Run simulation when the user clicks the button
+    simulateButton.addEventListener("click", function () {
 
-// Test 1: Missing transition
-const missingTransitionDFA = {
-    ...dfa,
-    transitions: {
-        q0: { "0": "q0" },
-        q1: { "0": "q0", "1": "q1" }
-    }
-};
+        const resultStatus = document.getElementById("resultStatus");
 
-testInvalidDFA("Missing Transition", missingTransitionDFA);
+        const executionPath = document.getElementById("executionPath");
 
+        const errorMessage = document.getElementById("errorMessage");
 
-// Test 2: Invalid destination state
-const invalidDestinationDFA = {
-    ...dfa,
-    transitions: {
-        q0: { "0": "q0", "1": "q5" },
-        q1: { "0": "q0", "1": "q1" }
-    }
-};
+        // Clear previous messages
+        errorMessage.textContent = "";
 
-testInvalidDFA("Invalid Destination", invalidDestinationDFA);
+        resultStatus.textContent = "Processing...";
 
+        executionPath.textContent = "";
 
-// Test 3: Invalid initial state
-const invalidInitialDFA = {
-    ...dfa,
-    initialState: "q5"
-};
+        try {
 
-testInvalidDFA("Invalid Initial State", invalidInitialDFA);
+            // Read DFA configuration from HTML
+            const dfa = getDFAFromHTML();
 
+            // Read the input string
+            // Empty string is allowed
+            const inputString = document
+                .getElementById("inputString")
+                .value;
 
-// Test 4: Invalid final state
-const invalidFinalDFA = {
-    ...dfa,
-    finalStates: ["q5"]
-};
+            // Validate and simulate the DFA
+            const result = simulateDFA(dfa, inputString);
 
-testInvalidDFA("Invalid Final State", invalidFinalDFA);
+            // Display ACCEPTED or REJECTED
+            resultStatus.textContent = result.result;
 
+            // Display execution path
+            if (result.steps.length === 0) {
 
-// Test 5: Duplicate states
-const duplicateStatesDFA = {
-    ...dfa,
-    states: ["q0", "q1", "q1"]
-};
+                executionPath.textContent =
+                    `Empty string: Start state ${result.finalState}`;
 
-testInvalidDFA("Duplicate States", duplicateStatesDFA);
+            } else {
 
+                executionPath.textContent = result.steps
+                    .map(step =>
+                        `${step.from} --${step.input}--> ${step.to}`
+                    )
+                    .join(" | ");
+            }
 
-// Test 6: Duplicate alphabet symbols
-const duplicateAlphabetDFA = {
-    ...dfa,
-    alphabet: ["0", "1", "1"]
-};
+            // Make simulation data available to visualization.js
+            window.currentDFA = dfa;
 
-testInvalidDFA("Duplicate Alphabet Symbols", duplicateAlphabetDFA);
+            window.lastDFAResult = result;
 
+            // Notify visualization.js that simulation is complete
+            document.dispatchEvent(
+                new CustomEvent("dfa:simulated", {
+                    detail: {
+                        dfa: dfa,
+                        result: result
+                    }
+                })
+            );
 
+        } catch (error) {
 
-// PART 4: BROWSER INTEGRATION
+            // Display validation or input errors
+            resultStatus.textContent = "Simulation failed";
 
+            executionPath.textContent = "";
 
-// Make DFA functions accessible to other JavaScript files
-if (typeof window !== "undefined") {
+            errorMessage.textContent = error.message;
+        }
+    });
+
+    // Make DFA functions available to other browser scripts
     window.DFAEngine = {
-        validateDFA,
-        simulateDFA
+        validateDFA: validateDFA,
+        simulateDFA: simulateDFA
     };
 }
 
 
+// ============================================================
+// PART 5: NODE.JS TESTING
+// These tests run only in Node.js, not in the browser.
+// ============================================================
 
+if (typeof window === "undefined") {
+
+    // Example DFA: Binary strings ending in 1
+    const dfa = {
+
+        // Set of all states
+        states: ["q0", "q1"],
+
+        // Input alphabet
+        alphabet: ["0", "1"],
+
+        // Transition function
+        transitions: {
+            q0: {
+                "0": "q0",
+                "1": "q1"
+            },
+
+            q1: {
+                "0": "q0",
+                "1": "q1"
+            }
+        },
+
+        // Initial state
+        initialState: "q0",
+
+        // Set of final states
+        finalStates: ["q1"]
+    };
+
+
+    // Test DFA configuration
+    console.log("==================================");
+    console.log("DFA CONFIGURATION VALIDATION");
+    console.log("==================================");
+
+    try {
+
+        validateDFA(dfa);
+
+        console.log("DFA configuration is valid!");
+
+    } catch (error) {
+
+        console.log("DFA Error:", error.message);
+    }
+
+
+    // Test invalid input
+    console.log("\n==================================");
+    console.log("INVALID INPUT TEST");
+    console.log("==================================");
+
+    try {
+
+        console.log(simulateDFA(dfa, "102"));
+
+    } catch (error) {
+
+        console.log("Input Error:", error.message);
+    }
+
+
+    // Test DFA simulation
+    console.log("\n==================================");
+    console.log("DFA SIMULATION TESTS");
+    console.log("==================================");
+
+    const testInputs = ["101", "111", "100", "000", ""];
+
+    for (const input of testInputs) {
+
+        // Run DFA simulation
+        const result = simulateDFA(dfa, input);
+
+        console.log(
+            "\nInput:",
+            input === "" ? "Empty String" : input
+        );
+
+        console.log("Result:", result.result);
+
+        console.log("Final State:", result.finalState);
+
+        console.log("State Path:", result.statePath.join(" -> "));
+
+        // Display step-by-step execution
+        console.log("Execution Steps:");
+
+        if (result.steps.length === 0) {
+
+            console.log("No transitions. Input is empty.");
+
+        } else {
+
+            result.steps.forEach((step, index) => {
+
+                console.log(
+                    `Step ${index + 1}: ${step.from} --${step.input}--> ${step.to}`
+                );
+            });
+        }
+    }
+
+
+    // ========================================================
+    // PART 6: TEST INVALID DFA CONFIGURATIONS
+    // ========================================================
+
+    function testInvalidDFA(name, testDFA) {
+
+        console.log("\nTesting:", name);
+
+        try {
+
+            validateDFA(testDFA);
+
+            console.log("Unexpected: DFA was accepted.");
+
+        } catch (error) {
+
+            console.log("Correctly rejected:", error.message);
+        }
+    }
+
+
+    // Test 1: Missing transition
+    const missingTransitionDFA = {
+        ...dfa,
+
+        transitions: {
+            q0: { "0": "q0" },
+            q1: { "0": "q0", "1": "q1" }
+        }
+    };
+
+    testInvalidDFA("Missing Transition", missingTransitionDFA);
+
+
+    // Test 2: Invalid destination state
+    const invalidDestinationDFA = {
+        ...dfa,
+
+        transitions: {
+            q0: { "0": "q0", "1": "q5" },
+            q1: { "0": "q0", "1": "q1" }
+        }
+    };
+
+    testInvalidDFA("Invalid Destination", invalidDestinationDFA);
+
+
+    // Test 3: Invalid initial state
+    const invalidInitialDFA = {
+        ...dfa,
+
+        initialState: "q5"
+    };
+
+    testInvalidDFA("Invalid Initial State", invalidInitialDFA);
+
+
+    // Test 4: Invalid final state
+    const invalidFinalDFA = {
+        ...dfa,
+
+        finalStates: ["q5"]
+    };
+
+    testInvalidDFA("Invalid Final State", invalidFinalDFA);
+
+
+    // Test 5: Duplicate states
+    const duplicateStatesDFA = {
+        ...dfa,
+
+        states: ["q0", "q1", "q1"]
+    };
+
+    testInvalidDFA("Duplicate States", duplicateStatesDFA);
+
+
+    // Test 6: Duplicate alphabet symbols
+    const duplicateAlphabetDFA = {
+        ...dfa,
+
+        alphabet: ["0", "1", "1"]
+    };
+
+    testInvalidDFA("Duplicate Alphabet Symbols", duplicateAlphabetDFA);
+}
