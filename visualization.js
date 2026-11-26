@@ -1,6 +1,7 @@
 
 // ==========================================
 // MEMBER 3: DFA VISUALIZATION
+// IMPROVED VERSION - SEPARATE TRANSITION ARROWS
 // ==========================================
 
 const DFAVisualizer = (() => {
@@ -36,7 +37,7 @@ const DFAVisualizer = (() => {
         currentResult = null;
 
         const width = 750;
-        const height = 450;
+        const height = 560;
         const radius = 35;
         const centerX = width / 2;
         const centerY = height / 2;
@@ -50,13 +51,15 @@ const DFAVisualizer = (() => {
 
         // Arrow marker
         const defs = createSVGElement("defs");
+
         const marker = createSVGElement("marker", {
             id: "dfa-arrow",
             markerWidth: 10,
             markerHeight: 10,
             refX: 8,
             refY: 3,
-            orient: "auto"
+            orient: "auto",
+            markerUnits: "strokeWidth"
         });
 
         marker.appendChild(createSVGElement("path", {
@@ -72,23 +75,27 @@ const DFAVisualizer = (() => {
         const count = dfa.states.length;
 
         dfa.states.forEach((state, index) => {
-            const angle = (2 * Math.PI * index / count) - Math.PI / 2;
+            const angle =
+                (2 * Math.PI * index / count) - Math.PI / 2;
 
             positions[state] = {
-                x: count === 1 ? centerX : centerX + 230 * Math.cos(angle),
-                y: count === 1 ? centerY : centerY + 145 * Math.sin(angle)
+                x: count === 1
+                    ? centerX
+                    : centerX + 230 * Math.cos(angle),
+
+                y: count === 1
+                    ? centerY
+                    : centerY + 145 * Math.sin(angle)
             };
         });
 
-        // Draw initial state incoming arrow
+        // Initial state arrow
         const initialPosition = positions[dfa.initialState];
 
         if (initialPosition) {
-            const startX = initialPosition.x - 85;
-            const startY = initialPosition.y;
-
             svg.appendChild(createSVGElement("path", {
-                d: `M ${startX} ${startY} L ${initialPosition.x - radius - 5} ${initialPosition.y}`,
+                d: `M ${initialPosition.x - 85} ${initialPosition.y}
+                    L ${initialPosition.x - radius - 5} ${initialPosition.y}`,
                 stroke: "#16a34a",
                 "stroke-width": 2.5,
                 fill: "none",
@@ -100,51 +107,38 @@ const DFAVisualizer = (() => {
         const transitions = dfa.transitions || {};
 
         Object.entries(transitions).forEach(([from, symbols]) => {
+
             Object.entries(symbols).forEach(([symbol, to]) => {
+
                 if (!positions[from] || !positions[to]) return;
 
                 const a = positions[from];
                 const b = positions[to];
 
+                
+                // SELF LOOP - SEPARATE POSITION FOR EACH STATE
                 if (from === to) {
-                    const loop = createSVGElement("path", {
-                        d: `M ${a.x - 20} ${a.y - 28}
+
+                    const isLowerState = a.y > centerY;
+
+                    const loopPath = isLowerState
+                        ? `
+                            M ${a.x - 20} ${a.y + 28}
+                            C ${a.x - 85} ${a.y + 100},
+                              ${a.x + 85} ${a.y + 100},
+                              ${a.x + 20} ${a.y + 28}
+                          `
+                        : `
+                            M ${a.x - 20} ${a.y - 28}
                             C ${a.x - 85} ${a.y - 100},
                               ${a.x + 85} ${a.y - 100},
-                              ${a.x + 20} ${a.y - 28}`,
+                              ${a.x + 20} ${a.y - 28}
+                          `;
+
+                    const loop = createSVGElement("path", {
+                        d: loopPath,
                         stroke: "#64748b",
-                        "stroke-width": 2,
-                        fill: "none",
-                        "marker-end": "url(#dfa-arrow)",
-                        class: "dfa-transition"
-                    });
-
-                    svg.appendChild(loop);
-
-                    const label = createSVGElement("text", {
-                        x: a.x,
-                        y: a.y - 90,
-                        "text-anchor": "middle",
-                        class: "dfa-transition-label"
-                    });
-
-                    label.textContent = symbol;
-                    svg.appendChild(label);
-
-                } else {
-                    const dx = b.x - a.x;
-                    const dy = b.y - a.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    const startX = a.x + dx / distance * radius;
-                    const startY = a.y + dy / distance * radius;
-                    const endX = b.x - dx / distance * (radius + 5);
-                    const endY = b.y - dy / distance * (radius + 5);
-
-                    const line = createSVGElement("path", {
-                        d: `M ${startX} ${startY} L ${endX} ${endY}`,
-                        stroke: "#64748b",
-                        "stroke-width": 2,
+                        "stroke-width": 2.5,
                         fill: "none",
                         "marker-end": "url(#dfa-arrow)",
                         class: "dfa-transition",
@@ -153,24 +147,113 @@ const DFAVisualizer = (() => {
                         "data-symbol": symbol
                     });
 
-                    svg.appendChild(line);
+                    svg.appendChild(loop);
 
                     const label = createSVGElement("text", {
-                        x: (startX + endX) / 2,
-                        y: (startY + endY) / 2 - 9,
+                        x: a.x,
+                        y: isLowerState
+                            ? a.y + 95
+                            : a.y - 88,
                         "text-anchor": "middle",
-                        class: "dfa-transition-label"
+                        class: "dfa-transition-label",
+                        fill: "#1e293b",
+                        "font-size": 16,
+                        "font-weight": "bold",
+                        stroke: "white",
+                        "stroke-width": 5,
+                        "paint-order": "stroke"
+                    });
+
+                    label.textContent = symbol;
+                    svg.appendChild(label);
+
+                }
+
+
+                // CURVED TRANSITIONS
+                else {
+
+                    const dx = b.x - a.x;
+                    const dy = b.y - a.y;
+
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    const unitX = dx / distance;
+                    const unitY = dy / distance;
+
+                    // Start and end points outside state circles
+                    const startX = a.x + unitX * radius;
+                    const startY = a.y + unitY * radius;
+
+                    const endX = b.x - unitX * (radius + 7);
+                    const endY = b.y - unitY * (radius + 7);
+
+                    // Perpendicular direction
+                    const perpendicularX = -unitY;
+                    const perpendicularY = unitX;
+
+                    // Curve separation
+                    // Reverse transitions naturally bend to opposite sides
+                    const curveDistance = -65;
+
+                    const controlX =
+                        (startX + endX) / 2 +
+                        perpendicularX * curveDistance;
+
+                    const controlY =
+                        (startY + endY) / 2 +
+                        perpendicularY * curveDistance;
+
+                    const path = createSVGElement("path", {
+                        d: `
+                            M ${startX} ${startY}
+                            Q ${controlX} ${controlY}
+                              ${endX} ${endY}
+                        `,
+                        stroke: "#64748b",
+                        "stroke-width": 2.5,
+                        fill: "none",
+                        "marker-end": "url(#dfa-arrow)",
+                        class: "dfa-transition",
+                        "data-from": from,
+                        "data-to": to,
+                        "data-symbol": symbol
+                    });
+
+                    svg.appendChild(path);
+
+                    // Label positioned on its own curved arrow
+                    const labelX =
+                        (startX + 2 * controlX + endX) / 4;
+
+                    const labelY =
+                        (startY + 2 * controlY + endY) / 4;
+
+                    const label = createSVGElement("text", {
+                        x: labelX,
+                        y: labelY - 8,
+                        "text-anchor": "middle",
+                        class: "dfa-transition-label",
+                        fill: "#1e293b",
+                        "font-size": 17,
+                        "font-weight": "bold",
+                        stroke: "white",
+                        "stroke-width": 5,
+                        "paint-order": "stroke"
                     });
 
                     label.textContent = symbol;
                     svg.appendChild(label);
                 }
+
             });
         });
 
         // Draw states
         dfa.states.forEach(state => {
+
             const position = positions[state];
+
             const group = createSVGElement("g", {
                 class: "dfa-state",
                 "data-state": state
@@ -178,6 +261,7 @@ const DFAVisualizer = (() => {
 
             // Final states have double circles
             if (dfa.finalStates.includes(state)) {
+
                 group.appendChild(createSVGElement("circle", {
                     cx: position.x,
                     cy: position.y,
@@ -201,8 +285,8 @@ const DFAVisualizer = (() => {
             });
 
             text.textContent = state;
-            group.appendChild(text);
 
+            group.appendChild(text);
             svg.appendChild(group);
         });
 
@@ -211,6 +295,7 @@ const DFAVisualizer = (() => {
 
     // Highlight simulation execution
     function update(result) {
+
         const container = document.getElementById("dfa-visualization");
 
         if (!container || !currentDFA || !result) return;
@@ -221,16 +306,26 @@ const DFAVisualizer = (() => {
         const finalState = result.finalState;
 
         container.querySelectorAll(".dfa-state").forEach(group => {
+
             const state = group.getAttribute("data-state");
 
-            group.classList.remove("visited", "current", "accepted", "rejected");
+            group.classList.remove(
+                "visited",
+                "current",
+                "accepted",
+                "rejected"
+            );
 
             if (path.includes(state)) {
                 group.classList.add("visited");
             }
 
             if (state === finalState) {
-                group.classList.add(result.accepted ? "accepted" : "rejected");
+
+                group.classList.add(
+                    result.accepted ? "accepted" : "rejected"
+                );
+
                 group.classList.add("current");
             }
         });
@@ -241,6 +336,7 @@ const DFAVisualizer = (() => {
         });
 
         (result.steps || []).forEach(step => {
+
             const line = Array.from(
                 container.querySelectorAll(".dfa-transition")
             ).find(item =>
@@ -249,7 +345,9 @@ const DFAVisualizer = (() => {
                 item.getAttribute("data-symbol") === step.input
             );
 
-            if (line) line.classList.add("path-active");
+            if (line) {
+                line.classList.add("path-active");
+            }
         });
     }
 
@@ -258,9 +356,12 @@ const DFAVisualizer = (() => {
     }
 
     function clear() {
+
         const container = document.getElementById("dfa-visualization");
 
-        if (container) container.replaceChildren();
+        if (container) {
+            container.replaceChildren();
+        }
 
         currentDFA = null;
         currentResult = null;
@@ -272,5 +373,5 @@ const DFAVisualizer = (() => {
         updateDFA,
         clear
     };
-})();
 
+})();
